@@ -1,11 +1,12 @@
 from homeassistant import config_entries
 import voluptuous as vol
-from .const import DOMAIN
+from .const import DOMAIN, API_HOSTS
 
 DATA_SCHEMA = vol.Schema({
     vol.Required("account"): str,
     vol.Required("password"): str,
-    vol.Optional("language", default="it"): str,
+    vol.Optional("server", default="us"): vol.In(API_HOSTS),
+    vol.Optional("language", default="en"): str,
 })
 
 class LeproLedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -17,7 +18,7 @@ class LeproLedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Create a new mutable dictionary for the user input
             data = dict(user_input)
-            
+
             # Don't include persistent_mac here - it will be generated later
             return self.async_create_entry(title="Lepro LED", data=data)
 
