@@ -1,8 +1,20 @@
 DOMAIN = "lepro_led"
 
-LOGIN_URL = "https://api-eu-iot.lepro.com/user/login"
-FAMILY_LIST_URL = "https://api-eu-iot.lepro.com/family/list/timestamp/{timestamp}"
-USER_PROFILE_URL = "https://api-eu-iot.lepro.com/user/profile"
-DEVICE_LIST_URL = "https://api-eu-iot.lepro.com/v3/device/list/fid/{fid}/timestamp/{timestamp}"
-SWITCH_API_URL = "https://api-eu-iot.lepro.com/statistic/record"
+API_HOSTS = {
+    "eu": "api-eu-iot.lepro.com",
+    "us": "api-na-iot.lepro.com",
+}
 
+
+def get_api_urls(region):
+    """Return a dict of API URLs for the given region."""
+    host = API_HOSTS[region]
+    base = f"https://{host}"
+    return {
+        "host": host,
+        "login": f"{base}/user/login",
+        "family_list": f"{base}/family/list/timestamp/{{timestamp}}",
+        "user_profile": f"{base}/user/profile",
+        "device_list": f"{base}/v3/device/list/fid/{{fid}}/timestamp/{{timestamp}}",
+        "switch": f"{base}/statistic/record",
+    }

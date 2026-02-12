@@ -9,7 +9,7 @@ import os
 import hashlib
 import re
 import numpy as np
-from .const import DOMAIN, LOGIN_URL, FAMILY_LIST_URL, USER_PROFILE_URL, DEVICE_LIST_URL, SWITCH_API_URL
+from .const import DOMAIN, get_api_urls
 from aiomqtt import Client, MqttError
 import aiofiles
 from homeassistant.core import callback
@@ -108,7 +108,7 @@ class MQTTClientWrapper:
             except asyncio.CancelledError:
                 pass
 
-async def async_login(session, account, password, mac, language="it", fcm_token=""):
+async def async_login(session, account, password, mac, api_urls, language="en", fcm_token=""):
     """Perform login and return bearer token."""
     timestamp = str(int(time.time()))
     payload = {
@@ -126,7 +126,7 @@ async def async_login(session, account, password, mac, language="it", fcm_token=
         "Device-Model": "custom_integration",
         "Device-System": "custom",
         "GMT": "+0",
-        "Host": "api-eu-iot.lepro.com",
+        "Host": api_urls["host"],
         "Language": language,
         "Platform": "2",
         "Screen-Size": "1536*2048",
@@ -135,7 +135,7 @@ async def async_login(session, account, password, mac, language="it", fcm_token=
         "User-Agent": "LE/1.0.9.202 (Custom Integration)",
     }
 
-    async with session.post(LOGIN_URL, json=payload, headers=headers) as resp:
+    async with session.post(api_urls["login"], json=payload, headers=headers) as resp:
         import json
         if resp.status != 200:
             _LOGGER.error("Login failed with status %s", resp.status)
@@ -752,8 +752,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     
     # Use the persistent MAC from config_data
     mac = config_data["persistent_mac"]
-    language = config_data.get("language", "it")
+    language = config_data.get("language", "en")
     fcm_token = config_data.get("fcm_token", "dfi8s76mRTCxRxm3UtNp2z:APA91bHWMEWKT9CgNfGJ961jot2qgfYdWePbO5sQLovSFDI7U_H-ulJiqIAB2dpZUUrhzUNWR3OE_eM83i9IDLk1a5ZRwHDxMA_TnGqdpE8H-0_JML8pBFA")
+    region = config_data.get("server", "us")
+    api_urls = get_api_urls(region)
     
     # Update hass.data with the new config
     hass.data["lepro_led"][entry.entry_id] = config_data
@@ -770,7 +772,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     async with aiohttp.ClientSession() as session:
         # 1) Login and get bearer token
-        bearer_token = await async_login(session, account, password, mac, language, fcm_token)
+        bearer_token = await async_login(session, account, password, mac, api_urls, language, fcm_token)
         if bearer_token is None:
             _LOGGER.error("Failed to login to Lepro API")
             return
@@ -782,7 +784,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             "Device-Model": "custom_integration",
             "Device-System": "custom",
             "GMT": "+0",
-            "Host": "api-eu-iot.lepro.com",
+            "Host": api_urls["host"],
             "Language": language,
             "Platform": "2",
             "Screen-Size": "1536*2048",
@@ -791,7 +793,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         }
 
         # 2) Get user profile to find uid and MQTT info
-        user_url = USER_PROFILE_URL
+        user_url = api_urls["user_profile"]
         timestamp = str(int(time.time()))
         headers["Timestamp"] = timestamp
         
@@ -817,7 +819,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             return
 
         # 4) Get family list to find fid
-        family_url = FAMILY_LIST_URL.format(timestamp=timestamp)
+        family_url = api_urls["family_list"].format(timestamp=timestamp)
         async with session.get(family_url, headers=headers) as resp:
             if resp.status != 200:
                 _LOGGER.error("Failed to get family list from Lepro API")
@@ -832,7 +834,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
         # 5) Get device list by fid
         timestamp = str(int(time.time()))
-        device_url = DEVICE_LIST_URL.format(fid=fid, timestamp=timestamp)
+        device_url = api_urls["device_list"].format(fid=fid, timestamp=timestamp)
         headers["Timestamp"] = timestamp
 
         async with session.get(device_url, headers=headers) as resp:
