@@ -1,6 +1,6 @@
 {
   "domain": "lepro_led",
-  "name": "Lepro LED Strip",
+  "name": "Lepro",
   "codeowners": ["@Sanji78"],
   "config_flow": true,
   "dependencies": [],

@@ -1,9 +1,9 @@
 {
-  "title": "Lepro LED Strip",
+  "title": "Lepro",
   "config": {
     "step": {
       "user": {
-        "title": "Connect Lepro LED",
+        "title": "Connect Lepro",
         "description": "Sign in with your Lepro account. A virtual MAC is generated to authenticate with the cloud.",
         "data": {
           "account": "Account (email/phone)",

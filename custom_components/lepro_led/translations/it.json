@@ -1,9 +1,9 @@
 {
-  "title": "Striscia LED Lepro",
+  "title": "Lepro",
   "config": {
     "step": {
       "user": {
-        "title": "Collega Lepro LED",
+        "title": "Collega Lepro",
         "description": "Accedi con il tuo account Lepro. Verrà generato un MAC virtuale per l'autenticazione al cloud.",
         "data": {
           "account": "Account (email/telefono)",
